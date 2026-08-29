@@ -1,13 +1,44 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-
+import 'package:image_picker/image_picker.dart';
 class FrameButton extends StatelessWidget {
   final MobileScannerController controller;
-
-  const FrameButton({
+  final void Function(String value) onScanResult;
+  final ImagePicker picker = ImagePicker();
+   FrameButton({
     super.key,
     required this.controller,
+    required this.onScanResult,
   });
+
+  Future<void> pickImage() async {
+  final XFile? image = await picker.pickImage(
+    source: ImageSource.gallery,
+  );
+
+  if (image == null) {
+    return;
+  }
+
+  final BarcodeCapture? result =
+      await controller.analyzeImage(image.path);
+
+  if (result == null) {
+    print('No QR code found');
+    return;
+  }
+
+  for (final barcode in result.barcodes) {
+    final String? value = barcode.rawValue;
+
+    if (value != null && value.isNotEmpty) {
+      onScanResult(value);
+      return;
+    }
+  }
+
+  print('No QR code found');
+}
 
   @override
   Widget build(BuildContext context) {
@@ -24,21 +55,17 @@ class FrameButton extends StatelessWidget {
           Column(
             children: [
               IconButton(
+                iconSize: 40,
+                icon: const Icon(
+                  Icons.flash_on,
+                  color: Colors.black,
+                  size: 40,
+                ),
                 onPressed: () {
                   controller.toggleTorch();
                 },
-                icon: const Icon(
-                  Icons.flash_on,
-                  color: Colors.white,
-                  size: 32,
-                ),
-              ),
-
-              const Text(
-                'Flash',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
+                style: ButtonStyle(
+                  backgroundColor: .all(Colors.white),
                 ),
               ),
             ],
@@ -51,20 +78,14 @@ class FrameButton extends StatelessWidget {
             children: [
               IconButton(
                 onPressed: () {
+                  pickImage();
                   // Gallery code will come here
                 },
+                style: ButtonStyle(backgroundColor: .all(Colors.white)),
                 icon: const Icon(
                   Icons.photo_library_outlined,
-                  color: Colors.white,
-                  size: 32,
-                ),
-              ),
-
-              const Text(
-                'Gallery',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
+                  color: Colors.black,
+                  size: 40,
                 ),
               ),
             ],
